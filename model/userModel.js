@@ -34,6 +34,9 @@ const userModel= new mongoose.Schema({
     },
     whishLists:{
         type:Array
+    },
+    listings:{
+        type:Array
     }
 })
 

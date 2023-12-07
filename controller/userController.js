@@ -2,6 +2,8 @@ const users = require("../model/userModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const property = require("../model/staysModel")
+
 ///user registration controller ///
 
 const userRegistration = async (req, res) => {
@@ -38,19 +40,47 @@ const userRegistration = async (req, res) => {
 /// User login controller ///
 const userLogin = async (req, res) => {
   const { email, password } = req.body;
-  const out = await users.findOne({ email });
-  if (out) {
-    if (await bcrypt.compare(password, out.password)) {
-      const token = jwt.sign({ id: out._id }, process.env.USER_SECRET_KEY, {
-        expiresIn: "1h",
-      });
-      res.status(200).json({ message: "login success", token: token });
-    } else {
-      res.status(401).json({ message: "incorrect Password" });
-    }
+  const user = await users.findOne({ email });
+
+  if (user && (await bcrypt.compare(password, user.password))) {
+    const token = jwt.sign({ id: user._id }, process.env.USER_SECRET_KEY, {
+      expiresIn: "1h",
+    });
+    res.status(200).json({ message: "login success", token: token });
   } else {
-    res.status(401).json({ message: "incorrect email" });
+    res.status(401).json({ message: "incorrect Password or email" });
   }
 };
 
-module.exports = { userRegistration, userLogin };
+/// get all stays ///
+
+
+const showStays = async (req,res)=>{
+  try {
+    const stays = await property.find()
+    res.status(200).json({data:stays})
+  } catch (error) {
+    res.send(error)
+  }
+
+
+}
+
+/// show a specific Product ///
+
+const specificStay = async (req,res)=>{
+const id = req.params.id
+  try {
+    const stay = await property.findById(id)
+    res.status(200).json({
+      message:"success",data:stay
+    })
+  } catch (error) {
+    res.send(error)
+  }
+
+}
+
+
+
+module.exports = { userRegistration, userLogin ,showStays,specificStay};
