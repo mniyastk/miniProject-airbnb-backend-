@@ -11,7 +11,7 @@ const registerValidation = async(req,res,next)=>{
         phone    :Joi.string().required()
     })
     try {
-        await registerSchema.validateAsync(req.body.userData);
+        await registerSchema.validateAsync(req.body.data);
         next()
     } catch (error) {
         res.status(400).json({error:error.details[0].message})
@@ -27,7 +27,7 @@ const loginValidation = async(req,res,next)=>{
         password : Joi.string().required().min(5).max(25),
     })
     try {
-        await loginSchema.validateAsync(req.body);
+        await loginSchema.validateAsync(req.body.data);
         next()
     } catch (error) {
         res.status(401).json({error:error.details[0].message})

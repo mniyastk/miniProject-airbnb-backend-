@@ -32,9 +32,7 @@ const userModel= new mongoose.Schema({
         type:Array,
         
     },
-    whishLists:{
-        type:Array
-    },
+    whishLists:[{type:mongoose.Schema.Types.ObjectId,ref:"properties"}],
     listings:{
         type:Array
     }
