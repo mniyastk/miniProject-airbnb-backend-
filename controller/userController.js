@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const property = require("../model/staysModel");
-const asyncHandler = require("../middleware/async");
+// const asyncHandler = require("../middleware/async");
 
 ///user registration controller ///
 
@@ -110,6 +110,61 @@ const viewWishlists = async (req, res) => {
   }
 };
 
+/// Delete from users's wishlists ///
+
+const deleteWishlist = async (req, res) => {
+  const id = req.params;
+  const user_id = req.user.id;
+
+  const user = await users.updateOne(
+    { _id: user_id },
+    { $pull: { whishLists: id.id } }
+  );
+  if (user.modifiedCount !== 0) {
+    res.status(204).json({ message: "item deleted successfully" });
+  } else {
+    res.status(400).json({ message: "stay does not exist on your wishlist" });
+  }
+};
+
+/// Book a stay ///
+
+const bookStay = async (req, res) => {
+  const user_id = req.user.id;
+  const stay = req.params.id;
+  const details = req.body.data;
+  const user = await users.findById(user_id)
+  if(user.bookings.some(item=>item.stay===stay)){
+    res.status(403).json({message:"this property is already booked by you"})
+  }else{
+    const confirmedBooking = await users.updateOne(
+      { _id: user_id },
+      {
+        $push: {
+          bookings:{ 
+            checkInDate: details.check_in_date,
+            checkOutDate: details.check_out_date,
+            numberOfGuests: details.number_of_guests,
+            stay:stay
+          ,}
+        },
+      }
+    );
+    if(confirmedBooking.modifiedCount===1){
+      res.status(200).json({message:"stay booked successfully"})
+    }else{
+      res.status(400).json({message:"booking failed"})
+    }
+    
+  }   
+
+  res.send(confirmedBooking);
+};
+
+const cancelBooking =async (req,res)=>{
+  
+}
+
 module.exports = {
   userRegistration,
   userLogin,
@@ -117,4 +172,6 @@ module.exports = {
   specificStay,
   addToWishlists,
   viewWishlists,
+  deleteWishlist,
+  bookStay,
 };

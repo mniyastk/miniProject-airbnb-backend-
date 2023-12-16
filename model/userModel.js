@@ -28,10 +28,7 @@ const userModel= new mongoose.Schema({
         type:String,
         default:"user"
     },
-    bookings:{
-        type:Array,
-        
-    },
+    bookings:[],
     whishLists:[{type:mongoose.Schema.Types.ObjectId,ref:"properties"}],
     listings:{
         type:Array
