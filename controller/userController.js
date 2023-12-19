@@ -2,7 +2,10 @@ const users = require("../model/userModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const crypto = require("crypto");
+const razorpay = require("razorpay");
 const property = require("../model/staysModel");
+
 // const asyncHandler = require("../middleware/async");
 
 ///user registration controller ///
@@ -127,43 +130,90 @@ const deleteWishlist = async (req, res) => {
   }
 };
 
+/// Create an order ///
+
+const orderCreate = async (req, res) => {
+  const instance = new razorpay({
+    key_id: process.env.KEY_ID,
+    key_secret: process.env.KEY_SECRET,
+  });
+  console.log(req.body)
+  const options = {
+    
+    amount: req.body.data.amount * 100,
+    currency: "INR",
+    receipt: crypto.randomBytes(10).toString("hex"),
+  };
+  instance.orders.create(options, (error, order) => {
+    if (error) {
+      console.log(error);
+      res.status(500).json({message:error})
+    } else {
+      console.log(order);
+      res
+        .status(200)
+        .json({ message: "order created successfully", data: order });
+    }
+  });
+};
+
 /// Book a stay ///
 
 const bookStay = async (req, res) => {
   const user_id = req.user.id;
   const stay = req.params.id;
+  
   const details = req.body.data;
-  const user = await users.findById(user_id)
-  if(user.bookings.some(item=>item.stay===stay)){
-    res.status(403).json({message:"this property is already booked by you"})
-  }else{
+
+  const user = await users.findById(user_id);
+
+  if (user.bookings.some((item) => item.stay === stay)) {
+    res.status(403).json({ message: "this property is already booked by you" });
+  } else {
     const confirmedBooking = await users.updateOne(
       { _id: user_id },
       {
         $push: {
-          bookings:{ 
+          bookings: {
             checkInDate: details.check_in_date,
             checkOutDate: details.check_out_date,
             numberOfGuests: details.number_of_guests,
-            stay:stay
-          ,}
+            stay: stay,
+          },
         },
       }
     );
-    if(confirmedBooking.modifiedCount===1){
-      res.status(200).json({message:"stay booked successfully"})
-    }else{
-      res.status(400).json({message:"booking failed"})
+    if (confirmedBooking.modifiedCount === 1) {
+      res.status(200).json({ message: "stay booked successfully" });
+    } else {
+      res.status(400).json({ message: "booking failed" });
     }
-    
-  }   
+  }
 
-  res.send(confirmedBooking);
+  res.status(200).send(confirmedBooking);
 };
 
-const cancelBooking =async (req,res)=>{
-  
-}
+/// verify payments ///
+
+const verifyPayment = async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+
+  req.body.response;
+  console.log(razorpay_order_id,razorpay_payment_id,razorpay_signature); 
+  const sign = razorpay_order_id + "|" + razorpay_payment_id;
+  const expectedSign = crypto
+    .createHmac("sha256", process.env.KEY_SECRET)
+    .update(sign.toString())
+    .digest("hex");
+  if (razorpay_signature === expectedSign) {
+    return res
+      .status(200)
+      .json({ message: "Payment verified successfully" });
+  } else {
+    res.status(400).json({ message: "Invalid signature sent !" });
+  }
+res.status(200).json({message:"niyas"})
+};
 
 module.exports = {
   userRegistration,
@@ -174,4 +224,6 @@ module.exports = {
   viewWishlists,
   deleteWishlist,
   bookStay,
+  orderCreate,
+  verifyPayment,
 };

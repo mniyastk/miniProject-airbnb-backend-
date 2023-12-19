@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 require("dotenv").config()
 const userAuth = (req,res,next)=>{
     const token = req.headers.authorization;
+    console.log(req.headers)
     if(!token){
         res.status(403).json({message:"token is required" ,status :"fail"})
     }else{
