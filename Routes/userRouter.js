@@ -1,4 +1,4 @@
-const errorHandler = require("../middleware/errorHandler");
+// const errorHandler = require("../middleware/errorHandler");
 const router = require("express").Router();
 const {
   userRegistration,
@@ -13,6 +13,9 @@ const {
   bookStay,
   orderCreate,
   verifyPayment,
+  showBookings,
+  cancelBooking,
+  googleAuth,
 } = require("../controller/userController");
 const {
   registerValidation,
@@ -29,6 +32,9 @@ router.delete("/api/user/wishlists/:id", userAuth, deleteWishlist);
 router.post("/api/user/booking/:id", userAuth, bookStay);
 router.post("/api/user/booking/order/create", orderCreate);
 router.post("/api/user/booking/order/verify",verifyPayment)
+router.get("/api/user/bookings/all",userAuth,showBookings)
+router.delete("/api/user/booking/cancel/stay",userAuth,cancelBooking)
+router.post('/api/user/googleAuth',googleAuth)
 
 // router.post('/api/user/logout',logOut)
 module.exports = router;

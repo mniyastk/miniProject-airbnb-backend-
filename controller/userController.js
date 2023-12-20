@@ -5,9 +5,26 @@ require("dotenv").config();
 const crypto = require("crypto");
 const razorpay = require("razorpay");
 const property = require("../model/staysModel");
+const { OAuth2Client } = require("google-auth-library");
 
 // const asyncHandler = require("../middleware/async");
 
+const googleAuth = async (req, res) => {
+  res.headers("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.headers("Referrer-Policy", "no-referrer-when-downgrade");
+  const redirectUrl = "http://127.0.0.1:3000/oauth";
+  const oAuth2Client = new OAuth2Client(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+    redirectUrl
+  );
+  const authorizedUrl = oAuth2Client.generateAuthUrl({
+    access_type:"offline",
+    scope:"https:/www.googleapis.com/auth/userinfo.profile openid",
+    prompt:'consent'
+  })
+  res.json({url:authorizedUrl})
+};
 ///user registration controller ///
 
 const userRegistration = async (req, res) => {
@@ -137,9 +154,8 @@ const orderCreate = async (req, res) => {
     key_id: process.env.KEY_ID,
     key_secret: process.env.KEY_SECRET,
   });
-  console.log(req.body)
+  console.log(req.body);
   const options = {
-    
     amount: req.body.data.amount * 100,
     currency: "INR",
     receipt: crypto.randomBytes(10).toString("hex"),
@@ -147,7 +163,7 @@ const orderCreate = async (req, res) => {
   instance.orders.create(options, (error, order) => {
     if (error) {
       console.log(error);
-      res.status(500).json({message:error})
+      res.status(500).json({ message: error });
     } else {
       console.log(order);
       res
@@ -162,7 +178,7 @@ const orderCreate = async (req, res) => {
 const bookStay = async (req, res) => {
   const user_id = req.user.id;
   const stay = req.params.id;
-  
+
   const details = req.body.data;
 
   const user = await users.findById(user_id);
@@ -189,30 +205,61 @@ const bookStay = async (req, res) => {
       res.status(400).json({ message: "booking failed" });
     }
   }
-
-  res.status(200).send(confirmedBooking);
 };
 
 /// verify payments ///
 
 const verifyPayment = async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-
-  req.body.response;
-  console.log(razorpay_order_id,razorpay_payment_id,razorpay_signature); 
+    req.body.response;
+  console.log(razorpay_order_id, razorpay_payment_id, razorpay_signature);
   const sign = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSign = crypto
     .createHmac("sha256", process.env.KEY_SECRET)
     .update(sign.toString())
     .digest("hex");
   if (razorpay_signature === expectedSign) {
-    return res
-      .status(200)
-      .json({ message: "Payment verified successfully" });
+    return res.status(200).json({ message: "Payment verified successfully" });
   } else {
     res.status(400).json({ message: "Invalid signature sent !" });
   }
-res.status(200).json({message:"niyas"})
+};
+
+/// Show all Bookings ///
+
+const showBookings = async (req, res) => {
+  const { id } = req.user;
+
+  const user = await users.findById(id);
+  if (user.bookings.length === 0) {
+    res.status(404).json({ message: "no bookings found" });
+  } else {
+    const stayIds = user.bookings.map((item) => item.stay);
+    const stays = await property.find({ _id: { $in: stayIds } });
+
+    const details = user.bookings.map((book) => {
+      const result = stays.find((item) => item._id == book.stay);
+
+      return { ...book, stay: result };
+    });
+    res.status(200).json({ data: details });
+  }
+};
+
+/// Cancel a booking ///
+
+const cancelBooking = async (req, res) => {
+  const { id } = req.user;
+  const { _id } = req.body;
+  const cancel = await users.updateOne(
+    { _id: id },
+    { $pull: { bookings: { stay: _id } } }
+  );
+  if (cancel.modifiedCount === 1) {
+    res.status(204);
+  } else {
+    res.status(400).json({ error: "Booking not found in your bookings" });
+  }
 };
 
 module.exports = {
@@ -226,4 +273,7 @@ module.exports = {
   bookStay,
   orderCreate,
   verifyPayment,
+  showBookings,
+  cancelBooking,
+  googleAuth
 };

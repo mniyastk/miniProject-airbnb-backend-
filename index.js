@@ -7,6 +7,8 @@ const bodyParser = require("body-parser");
 const userRouter = require("./Routes/userRouter");
 const hostRouter = require("./Routes/hostRouter");
 const errorHandler = require('./middleware/errorHandler')
+const adminRouter = require('./Routes/adminRouter')
+const OAuth= require('./helpers/OAuth')
 const port = 4000;
 require("dotenv").config()
 
@@ -20,7 +22,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use(userRouter);
 app.use(hostRouter);
+app.use(adminRouter);
+app.use(OAuth)
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found' });
+});
 app.use(errorHandler)
+
 app.listen(port, () => {
   console.log("app is listenig to port:" + port);
 });
