@@ -64,30 +64,6 @@ const dart =propertyData.property
   }
 };
 
-const imageUplaod = async (req, res) => {
-  const test = [];
-  try {
-    // const files = req.files;
-    const files=req.files
-    console.log(files)
-const data = req.body.property
 
-console.log(data);
-    // console.log(files);
-    // const uplads = files.map(async (file) => {
-    //   const result = await cloudinary.uploader.upload(file.path);
-    //   return result;
-    // });
-    // Promise.all(uplads).then((data) => {
-    //   data.map((item) => test.push(item.secure_url));
-    // });
-    // Promise.all(uplads).then(() => console.log(test));
-  } catch (error) {
-    res.send(error);
-  }
-};
-const test = (req, res) => {
-  res.send("success");
-};
 
-module.exports = { addListing, test, imageUplaod };
+module.exports = { addListing};

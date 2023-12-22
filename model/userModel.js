@@ -15,14 +15,14 @@ const userModel= new mongoose.Schema({
     },
     password:{
         type:String,
-        required:true
+        required:false
     },
     profilePicture:{
         type:String
     },
     phone:{
         type:String,
-        required:true
+        required:false
     },
     userType:{
         type:String,

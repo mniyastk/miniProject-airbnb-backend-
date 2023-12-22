@@ -5,26 +5,11 @@ require("dotenv").config();
 const crypto = require("crypto");
 const razorpay = require("razorpay");
 const property = require("../model/staysModel");
-const { OAuth2Client } = require("google-auth-library");
+
 
 // const asyncHandler = require("../middleware/async");
 
-const googleAuth = async (req, res) => {
-  res.headers("Access-Control-Allow-Origin", "http://localhost:3000");
-  res.headers("Referrer-Policy", "no-referrer-when-downgrade");
-  const redirectUrl = "http://127.0.0.1:3000/oauth";
-  const oAuth2Client = new OAuth2Client(
-    process.env.CLIENT_ID,
-    process.env.CLIENT_SECRET,
-    redirectUrl
-  );
-  const authorizedUrl = oAuth2Client.generateAuthUrl({
-    access_type:"offline",
-    scope:"https:/www.googleapis.com/auth/userinfo.profile openid",
-    prompt:'consent'
-  })
-  res.json({url:authorizedUrl})
-};
+
 ///user registration controller ///
 
 const userRegistration = async (req, res) => {
@@ -275,5 +260,4 @@ module.exports = {
   verifyPayment,
   showBookings,
   cancelBooking,
-  googleAuth
 };

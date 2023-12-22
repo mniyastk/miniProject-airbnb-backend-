@@ -13,7 +13,7 @@ const getDetails = async (access_token)=>{
 router.get('/',async function(req,res){
     const code = req.query.code
     try {
-        const redirectUrl='http://127.0.0.1:3000:oauth'
+        const redirectUrl='http://127.0.0.1:4000/api/user/googleAuth'
         const oAuth2Client = new OAuth2Client(
             process.env.CLIENT_ID,
             process.env.CLIENT_SECRET,
