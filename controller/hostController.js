@@ -1,69 +1,67 @@
 const property = require("../model/staysModel");
 const cloudinary = require("../helpers/cloudinary");
+const users = require("../model/userModel");
 
 const addListing = async (req, res) => {
-  const imageData = [];
+  const files = req.files;
+  const { id } = req.user;
+  const propertyData = JSON.parse(req.body.property);
+  const dart = propertyData.property;
+  const {
+    address,
+    amenities,
+    bathrooms,
+    bedRooms,
+    beds,
+    country,
+    description,
+    host_id,
+    maxGuests,
+    price,
+    propertyType,
+    stayType,
+    title,
+  } = dart;
 
-  try {
-    const files=req.files
-    console.log(files)
-const propertyData = JSON.parse(req.body.property);
-const dart =propertyData.property
+ 
+  const uploads = files.map(async (item) => {
+    const result = await cloudinary.uploader.upload(item.path);
+    return { url: result.secure_url };
+  });
 
+ 
+  const imageData = await Promise.all(uploads);
 
-    const {
-      address,
-      amenities,
-      bathrooms,
-      bedRooms,
-      beds,
-      country,
-      description,
-      images,
-      maxGuests,
-      price,
-      propertyType,
-      stayType,
-      title,
-    } =dart;
-   
+  
+  const listing = await property.create({
+    host_id,
+    address,
+    amenities,
+    bathrooms,
+    bedRooms,
+    beds,
+    country,
+    description,
+    images: imageData,
+    maxGuests,
+    price,
+    propertyType,
+    stayType,
+    title,
+  });
 
-   
-    const uploads = files.map(async (item) => {
-      const result = await cloudinary.uploader.upload(item.path);
-      return result
-    });
+ 
+  await users.updateOne({ _id: id }, { $push: { listings: listing._id } });
 
-    Promise.all(uploads).then((data) => {
-      console.log(data)
-      data.map((item) => imageData.push({url:item.secure_url}))
-    })
-    .then(()=>{
-     const listing= property.create({
-        address,
-        amenities,
-        bathrooms,
-        bedRooms,
-        beds,
-        country,
-        description,
-        images:imageData,
-        maxGuests,
-        price,
-        propertyType,
-        stayType,
-        title,
-      })
-      res.status(201).json({ message: "success", data: listing });
-    })
-    .catch(e=>console.log(e))
-    
-    
-  } catch (error) {
-    res.send(error);
-  }
+  res.status(201).json({ message: "success", data: listing });
 };
 
+/// get all listings ///
 
+const listings = async (req, res) => {
+  const host_id = req.user.id;
+  const host = await users.findById(host_id).populate("listings");
+  res.status(200).json({ message: "success", data: host.listings });
+};
 
-module.exports = { addListing};
+module.exports = { addListing, listings };

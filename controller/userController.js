@@ -6,9 +6,7 @@ const crypto = require("crypto");
 const razorpay = require("razorpay");
 const property = require("../model/staysModel");
 
-
 // const asyncHandler = require("../middleware/async");
-
 
 ///user registration controller ///
 
@@ -43,6 +41,34 @@ const userRegistration = async (req, res) => {
   }
 };
 
+/// user register using google auth ///
+
+const googleLogin = async (req, res) => {
+  const { given_name, family_name, email } = req.body.res.data;
+  const existingUser = await users.findOne({ email: email });
+
+  if (existingUser) {
+    const token = jwt.sign({ id: existingUser._id }, process.env.USER_SECRET_KEY, {
+      expiresIn: "1h",
+    });
+    res
+      .status(200)
+      .json({ message: "user logined successfully", token: token ,user_id:existingUser._id});
+  } else {
+    const user =await users.create({
+      firstName: given_name,
+      lastName: family_name,
+      email,
+    });
+    const token = jwt.sign({ id : user._id }, process.env.USER_SECRET_KEY, {
+      expiresIn: "1h",
+    });
+    res
+      .status(201)
+      .json({ message: "user resgistered successfully", token: token });
+  }
+};
+
 /// User login controller ///
 const userLogin = async (req, res) => {
   const { email, password } = req.body.data;
@@ -52,7 +78,10 @@ const userLogin = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.USER_SECRET_KEY, {
       expiresIn: "1h",
     });
-    res.status(200).json({ message: "login success", token: token });
+    res.status(200).json({
+      message: "login success",
+      data: { token: token, user_id: user._id },
+    });
   } else {
     res.status(401).json({ message: "incorrect Password or email" });
   }
@@ -61,7 +90,7 @@ const userLogin = async (req, res) => {
 /// get all stays ///
 
 const showStays = async (req, res) => {
-  const stays = await property.find();
+  const stays = await property.find({ verified: true });
   if (!stays) {
     res.status(404).json({ message: "data fetching failed " });
   } else {
@@ -90,8 +119,10 @@ const specificStay = async (req, res) => {
 const addToWishlists = async (req, res) => {
   const id = req.params.id;
   const user = req.user;
+  console.log(user,id);
   const currentUser = await users.findById(user.id);
   const stay = await property.findById(id);
+  console.log(stay,currentUser);
   if (currentUser.whishLists.includes(id) && stay) {
     res.send("stay already exists in wishlists");
   } else {
@@ -260,4 +291,5 @@ module.exports = {
   verifyPayment,
   showBookings,
   cancelBooking,
+  googleLogin,
 };

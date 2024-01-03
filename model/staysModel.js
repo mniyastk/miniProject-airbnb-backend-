@@ -1,9 +1,11 @@
-const { object, string } = require('joi');
+// const { object, string } = require('joi');
 const mongoose = require('mongoose');
 
 const staysModel = new mongoose.Schema({
-    host_id :{
-        type:String,
+    host_id :{type:mongoose.Schema.Types.ObjectId,ref:"properties"},
+    verified:{
+        type:Boolean,
+        default:false
     },
     propertyType:{
         type:String,

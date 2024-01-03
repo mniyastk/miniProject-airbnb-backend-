@@ -13,6 +13,7 @@ const {
   verifyPayment,
   showBookings,
   cancelBooking,
+  googleLogin,
  
 } = require("../controller/userController");
 const {
@@ -21,6 +22,7 @@ const {
 } = require("../middleware/joiValidation");
 const userAuth = require("../middleware/userAuth");
 router.post("/api/user/register", registerValidation, userRegistration);
+router.post("/api/user/google/registration",googleLogin)
 router.post("/api/user/login", userLogin);
 router.get("/api/user/stays", showStays);
 router.get("/api/user/:id", specificStay);

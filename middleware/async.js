@@ -1,4 +1,3 @@
-
 module.exports = function asyncHandler(handler) {
   return async (req, res, next) => {
     try {

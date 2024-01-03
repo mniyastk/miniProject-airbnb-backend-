@@ -30,9 +30,7 @@ const userModel= new mongoose.Schema({
     },
     bookings:[],
     whishLists:[{type:mongoose.Schema.Types.ObjectId,ref:"properties"}],
-    listings:{
-        type:Array
-    }
+    listings:[{type:mongoose.Schema.Types.ObjectId,ref:"properties"}]
 })
 
 module.exports=mongoose.model("users",userModel);
