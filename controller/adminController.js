@@ -11,7 +11,7 @@ const findAllUsers = async (req, res) => {
 /// find all verified lisings ///
 
 const allListings = async (req, res) => {
-  const listings = await property.find({verified:true});
+  const listings = await property.find({ verified: true });
   res.status(200).json({ data: listings });
 };
 
@@ -32,24 +32,55 @@ const viewUnverifiedListing = async (req, res) => {
   res.status(200).json({ data: listing });
 };
 
-
 /// approve Listings ///
 
-const approveListing =async (req,res)=>{
-  const listing = req.params.id
-  const result = await property.updateOne({_id:listing},{$set:{verified:true}})
-  if(result.modifiedCount===1){
-    res.status(200).json({data:result})
-  }else{
-    res.status(400)
+const approveListing = async (req, res) => {
+  const listing = req.params.id;
+  const result = await property.updateOne(
+    { _id: listing },
+    { $set: { verified: true } }
+  );
+  if (result.modifiedCount === 1) {
+    res.status(200).json({ data: result });
+  } else {
+    res.status(400);
   }
-  
-}
+};
+
+/// Disapprove Listings ///
+
+const disapproveListing = async (req, res) => {
+  const listing = req.params.id;
+  const result = await property.deleteOne({ _id: listing });
+  if (result.deletedCount === 1) {
+    res.status(200).json({ message: "resource deleted successfully" });
+  } else {
+    res.status(400);
+  }
+};
+
+/// Block an user ///
+
+const blockUser = async (req, res) => {
+  const { id } = req.params;
+  const { input } = req.body;
+  const user = await users.updateOne(
+    { _id: id },
+    { $set: { user_status: input.user_status } }
+  );
+  if (user.modifiedCount ===1) {
+    res.status(200).json({message:"success"});
+  } else {
+    res.status(400).json({ message: "failed operation" });
+  }
+};
 
 module.exports = {
   findAllUsers,
   allListings,
   unverifiedListings,
   viewUnverifiedListing,
-  approveListing
+  approveListing,
+  disapproveListing,
+  blockUser,
 };

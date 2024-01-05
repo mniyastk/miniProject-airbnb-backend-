@@ -14,6 +14,7 @@ const {
   showBookings,
   cancelBooking,
   googleLogin,
+  bookedDates,
  
 } = require("../controller/userController");
 const {
@@ -34,6 +35,7 @@ router.post("/api/user/booking/order/create", orderCreate);
 router.post("/api/user/booking/order/verify",verifyPayment)
 router.get("/api/user/bookings/all",userAuth,showBookings)
 router.delete("/api/user/booking/cancel/stay",userAuth,cancelBooking)
+router.get("/api/users/bookings/booking/dates",bookedDates)
 
 
 

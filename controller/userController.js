@@ -48,19 +48,29 @@ const googleLogin = async (req, res) => {
   const existingUser = await users.findOne({ email: email });
 
   if (existingUser) {
-    const token = jwt.sign({ id: existingUser._id }, process.env.USER_SECRET_KEY, {
-      expiresIn: "1h",
-    });
-    res
-      .status(200)
-      .json({ message: "user logined successfully", token: token ,user_id:existingUser._id});
+    if (existingUser.user_status === "active") {
+      const token = jwt.sign(
+        { id: existingUser._id },
+        process.env.USER_SECRET_KEY,
+        {
+          expiresIn: "1h",
+        }
+      );
+      res.status(200).json({
+        message: "user logined successfully",
+        token: token,
+        user_id: existingUser._id,
+      });
+    } else {
+      res.status(401).json({ message: "You are Blocked !, Contact support" });
+    }
   } else {
-    const user =await users.create({
+    const user = await users.create({
       firstName: given_name,
       lastName: family_name,
       email,
     });
-    const token = jwt.sign({ id : user._id }, process.env.USER_SECRET_KEY, {
+    const token = jwt.sign({ id: user._id }, process.env.USER_SECRET_KEY, {
       expiresIn: "1h",
     });
     res
@@ -74,7 +84,10 @@ const userLogin = async (req, res) => {
   const { email, password } = req.body.data;
   const user = await users.findOne({ email });
 
-  if (user && (await bcrypt.compare(password, user.password))) {
+  if (
+    user.user_status === "active" &&
+    (await bcrypt.compare(password, user.password))
+  ) {
     const token = jwt.sign({ id: user._id }, process.env.USER_SECRET_KEY, {
       expiresIn: "1h",
     });
@@ -83,7 +96,11 @@ const userLogin = async (req, res) => {
       data: { token: token, user_id: user._id },
     });
   } else {
-    res.status(401).json({ message: "incorrect Password or email" });
+    if (user.user_status === "blocked") {
+      res.status(401).json({ message: "Your are blocked !! Contact support" });
+    } else {
+      res.status(401).json({ message: "incorrect Password or email" });
+    }
   }
 };
 
@@ -119,10 +136,10 @@ const specificStay = async (req, res) => {
 const addToWishlists = async (req, res) => {
   const id = req.params.id;
   const user = req.user;
-  console.log(user,id);
+  console.log(user, id);
   const currentUser = await users.findById(user.id);
   const stay = await property.findById(id);
-  console.log(stay,currentUser);
+  console.log(stay, currentUser);
   if (currentUser.whishLists.includes(id) && stay) {
     res.send("stay already exists in wishlists");
   } else {
@@ -209,8 +226,15 @@ const bookStay = async (req, res) => {
           bookings: {
             checkInDate: details.check_in_date,
             checkOutDate: details.check_out_date,
-            numberOfGuests: details.number_of_guests,
+            guests: details.number_of_guests,
             stay: stay,
+            invoiceData:{
+              full_name:user.firstName+" "+user.lastName,
+              nights:details.nights,
+              serviceFee:details.serviceFee,
+              paymentDate:details.paymentTime,
+              total:details.total
+            }
           },
         },
       }
@@ -235,7 +259,7 @@ const verifyPayment = async (req, res) => {
     .update(sign.toString())
     .digest("hex");
   if (razorpay_signature === expectedSign) {
-    return res.status(200).json({ message: "Payment verified successfully" });
+    return res.status(200).json({ message: "Payment verified successfully" ,});
   } else {
     res.status(400).json({ message: "Invalid signature sent !" });
   }
@@ -248,18 +272,29 @@ const showBookings = async (req, res) => {
 
   const user = await users.findById(id);
   if (user.bookings.length === 0) {
-    res.status(404).json({ message: "no bookings found" });
-  } else {
-    const stayIds = user.bookings.map((item) => item.stay);
-    const stays = await property.find({ _id: { $in: stayIds } });
-
-    const details = user.bookings.map((book) => {
-      const result = stays.find((item) => item._id == book.stay);
-
-      return { ...book, stay: result };
-    });
-    res.status(200).json({ data: details });
+    return res.status(404).json({ message: "No bookings found" });
   }
+
+  const stayIds = user.bookings.map((item) => item.stay);
+  const bookingsWithStays = await property
+    .find({ _id: { $in: stayIds } })
+
+
+  const formattedBookings = user.bookings.map((booking) => {
+    const stay = bookingsWithStays.find((stay) =>
+      stay._id.equals(booking.stay)
+    );
+    return {
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      _id:booking._id,
+      stay: stay,
+      invoiceData:booking.invoiceData,
+      guests:booking.guests
+    };
+  });
+
+  res.status(200).json({ data: formattedBookings });
 };
 
 /// Cancel a booking ///
@@ -269,13 +304,33 @@ const cancelBooking = async (req, res) => {
   const { _id } = req.body;
   const cancel = await users.updateOne(
     { _id: id },
-    { $pull: { bookings: { stay: _id } } }
+    { $pull: { bookings: { _id: _id } } }
   );
   if (cancel.modifiedCount === 1) {
-    res.status(204);
+    res.status(200).json({message:"booking cancellation was successfull"});
   } else {
     res.status(400).json({ error: "Booking not found in your bookings" });
   }
+};
+
+/// get curretly booked dates ///
+
+const bookedDates = async (req, res) => {
+  const property = req.headers.id;
+  const user = await users.find();
+  console.log(property);
+  const dates = user
+    .flatMap((user) =>
+      user.bookings.filter((booking) => booking.stay == property)
+    )
+    .map((booking) => ({
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+    }));
+
+  // const dates = user.flatMap(item => item.bookings.map(booking => [booking.checkInDate.toString(),booking.checkOutDate.toString()]));
+
+  res.status(200).json({ data: dates });
 };
 
 module.exports = {
@@ -292,4 +347,5 @@ module.exports = {
   showBookings,
   cancelBooking,
   googleLogin,
+  bookedDates,
 };

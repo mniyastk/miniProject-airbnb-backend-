@@ -51,7 +51,7 @@ const addListing = async (req, res) => {
   });
 
  
-  await users.updateOne({ _id: id }, { $push: { listings: listing._id } });
+  await users.updateOne({ _id: id }, { $push: { listings: listing._id } ,$set:{userType:"host"}});
 
   res.status(201).json({ message: "success", data: listing });
 };
