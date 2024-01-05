@@ -15,6 +15,8 @@ const {
   cancelBooking,
   googleLogin,
   bookedDates,
+  stysCategory,
+  searchResults,
  
 } = require("../controller/userController");
 const {
@@ -36,6 +38,8 @@ router.post("/api/user/booking/order/verify",verifyPayment)
 router.get("/api/user/bookings/all",userAuth,showBookings)
 router.delete("/api/user/booking/cancel/stay",userAuth,cancelBooking)
 router.get("/api/users/bookings/booking/dates",bookedDates)
+router.get("/api/users/properties/category?",stysCategory)
+router.get("/api/users/properties/search?",searchResults)
 
 
 

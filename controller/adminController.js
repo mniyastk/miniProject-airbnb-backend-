@@ -1,5 +1,33 @@
 const users = require("../model/userModel");
 const property = require("../model/staysModel");
+const adminModel = require("../model/adminModel");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+
+/// admin login ///
+
+const adminLogin = async (req, res) => {
+  const { admin, password } = req.body;
+  console.log(admin,password)
+  const [adminDetail] = await adminModel.find({ admin });
+  console.log(adminDetail)
+  if (adminDetail.password === password) {
+    console.log("hi");
+    const token = jwt.sign(
+      { id: adminDetail._id },
+      process.env.USER_SECRET_KEY,
+      {
+        expiresIn: "1h",
+      }
+    );
+    res.status(200).json({
+      message: "login success",
+      data: { token: token, admin: adminDetail._id },
+    });
+  } else {
+    res.status(401).json({ message: "incorrect Password or email" });
+  }
+};
 
 /// find all users ///
 
@@ -68,8 +96,8 @@ const blockUser = async (req, res) => {
     { _id: id },
     { $set: { user_status: input.user_status } }
   );
-  if (user.modifiedCount ===1) {
-    res.status(200).json({message:"success"});
+  if (user.modifiedCount === 1) {
+    res.status(200).json({ message: "success" });
   } else {
     res.status(400).json({ message: "failed operation" });
   }
@@ -83,4 +111,5 @@ module.exports = {
   approveListing,
   disapproveListing,
   blockUser,
+  adminLogin,
 };

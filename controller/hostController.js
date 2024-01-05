@@ -48,6 +48,7 @@ const addListing = async (req, res) => {
     propertyType,
     stayType,
     title,
+    userType:"host"
   });
 
  

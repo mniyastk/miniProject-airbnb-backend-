@@ -328,10 +328,37 @@ const bookedDates = async (req, res) => {
       checkOutDate: booking.checkOutDate,
     }));
 
-  // const dates = user.flatMap(item => item.bookings.map(booking => [booking.checkInDate.toString(),booking.checkOutDate.toString()]));
-
   res.status(200).json({ data: dates });
 };
+
+/// get stays by category ///
+
+const stysCategory = async (req,res)=>{
+  const category = req.query.stayType
+
+  const properties = await property.find({propertyType:category})
+ 
+  if(properties){
+    res.status(200).json({message:"success" ,data:properties})
+  }else{
+    res.status(400).json({message:"failed"})
+  }
+}
+
+/// search results ///
+
+const searchResults = async(req,res)=>{
+const { keyword } = req.query;
+const searchResults = await property.find({
+  $or: [
+    { propertyType: { $regex: new RegExp(keyword, 'i') } },
+    { title: { $regex: new RegExp(keyword, 'i') } },
+  ],
+});
+
+res.status(200).json({ success: true, results: searchResults });
+
+} 
 
 module.exports = {
   userRegistration,
@@ -348,4 +375,6 @@ module.exports = {
   cancelBooking,
   googleLogin,
   bookedDates,
+  stysCategory,
+  searchResults
 };
