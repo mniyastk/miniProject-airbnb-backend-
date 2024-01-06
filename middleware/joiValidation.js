@@ -6,9 +6,9 @@ const registerValidation = async(req,res,next)=>{
     const registerSchema = Joi.object({
         firstName :Joi.string().required(),
         lastName : Joi.string().required(),
-        password : Joi.string().required().min(5).max(25),
+        password : Joi.string().min(5).max(25),
         email    : Joi.string().email().lowercase().required(),
-        phone    :Joi.string().required()
+        phone    :Joi.string()
     })
     try {
         await registerSchema.validateAsync(req.body.data);
