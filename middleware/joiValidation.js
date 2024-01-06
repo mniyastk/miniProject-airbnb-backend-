@@ -8,7 +8,8 @@ const registerValidation = async(req,res,next)=>{
         lastName : Joi.string().required(),
         password : Joi.string().min(5).max(25),
         email    : Joi.string().email().lowercase().required(),
-        phone    :Joi.string()
+        phone    :Joi.string(),
+        confirmPassword:Joi.string()
     })
     try {
         await registerSchema.validateAsync(req.body.data);
