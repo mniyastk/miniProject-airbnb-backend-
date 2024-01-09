@@ -17,6 +17,7 @@ const {
   bookedDates,
   stysCategory,
   searchResults,
+  forgotPassword,
  
 } = require("../controller/userController");
 const {
@@ -40,6 +41,7 @@ router.delete("/api/user/booking/cancel/stay",userAuth,cancelBooking)
 router.get("/api/users/bookings/booking/dates",bookedDates)
 router.get("/api/users/properties/category?",stysCategory)
 router.get("/api/users/properties/search?",searchResults)
+router.post("/user/forgotPassword",forgotPassword)
 
 
 

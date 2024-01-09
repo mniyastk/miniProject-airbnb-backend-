@@ -5,6 +5,8 @@ require("dotenv").config();
 const crypto = require("crypto");
 const razorpay = require("razorpay");
 const property = require("../model/staysModel");
+const nodemailer = require('nodemailer');
+
 
 // const asyncHandler = require("../middleware/async");
 
@@ -360,6 +362,45 @@ res.status(200).json({ success: true, results: searchResults });
 
 } 
 
+/// forgot password ///
+
+const forgotPassword = async(req,res)=>{
+  const  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'niyas75tk@gmail.com',
+      pass: 'nnfw zlpk bhkk auci'
+    }
+  });
+  
+  const mailOptions = {
+    from: 'niyas75tk@gmail.com',
+    to: 'fxking387@gmail.com',
+    subject: 'Sending Email using Node.js',
+    text: 'That was easy!'
+  };
+
+  const chars = '0123456789';
+  let otp = '';
+
+  for (let i = 0; i < 4; i++) {
+      const randomIndex = Math.floor(Math.random() * chars.length);
+      otp += chars[randomIndex];
+    
+  }
+
+  
+  
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
+    }
+  });
+  res.json({message :otp+"success"})
+}
+
 module.exports = {
   userRegistration,
   userLogin,
@@ -376,5 +417,6 @@ module.exports = {
   googleLogin,
   bookedDates,
   stysCategory,
-  searchResults
+  searchResults,
+  forgotPassword
 };
