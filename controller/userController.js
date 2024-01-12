@@ -46,7 +46,7 @@ const userRegistration = async (req, res) => {
 /// user register using google auth ///
 
 const googleLogin = async (req, res) => {
-  const { given_name, family_name, email } = req.body.res.data;
+  const { given_name, family_name, email ,picture} = req.body.res.data;
   const existingUser = await users.findOne({ email: email });
 
   if (existingUser) {
@@ -71,6 +71,7 @@ const googleLogin = async (req, res) => {
       firstName: given_name,
       lastName: family_name,
       email,
+      profilePicture:picture
     });
     const token = jwt.sign({ id: user._id }, process.env.USER_SECRET_KEY, {
       expiresIn: "1h",
@@ -126,9 +127,12 @@ const specificStay = async (req, res) => {
   if (!stay) {
     res.status(404).json({ message: "stay is not found " });
   } else {
+    const host = await users.findById(stay.host_id)
     res.status(200).json({
       message: "success",
       data: stay,
+      host:{name:host.firstName+" "+host.lastName,dp:host.profilePicture?host.profilePicture:null}
+
     });
   }
 };
@@ -365,6 +369,20 @@ res.status(200).json({ success: true, results: searchResults });
 /// forgot password ///
 
 const forgotPassword = async(req,res)=>{
+  const {email} = req.body
+  const user = await users.findOne({email:email})
+if(!user){
+  res.status(400).json({message:"user does not exist with this email"})
+
+}else{
+  const chars = '0123456789';
+  let otp = '';
+
+  for (let i = 0; i < 4; i++) {
+      const randomIndex = Math.floor(Math.random() * chars.length);
+      otp += chars[randomIndex];
+    
+  }
   const  transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -375,30 +393,58 @@ const forgotPassword = async(req,res)=>{
   
   const mailOptions = {
     from: 'niyas75tk@gmail.com',
-    to: 'fxking387@gmail.com',
-    subject: 'Sending Email using Node.js',
-    text: 'That was easy!'
+    to: email,
+    subject: 'forgot password',
+    text:`The OTP to reset your password is : ${otp}`
   };
 
-  const chars = '0123456789';
-  let otp = '';
-
-  for (let i = 0; i < 4; i++) {
-      const randomIndex = Math.floor(Math.random() * chars.length);
-      otp += chars[randomIndex];
-    
-  }
+  
 
   
   
   transporter.sendMail(mailOptions, function(error, info){
     if (error) {
+      res.status(400).json({message:"Otp generation failed"})
       console.log(error);
     } else {
+   
       console.log('Email sent: ' + info.response);
+      res.status(200).json({otp :otp})
     }
   });
-  res.json({message :otp+"success"})
+}
+
+
+ 
+}
+
+/// verify Otp ///
+
+
+const verifyOtp = async (req,res)=>{
+  const {otp,userOtp} = req.body
+  if(userOtp===otp){
+    res.status(200).json({message:"otp verified successfully"})
+  }else{
+    res.status(400).json({message:"entered incorrect otp"})
+  }
+}
+
+/// reset password ///
+
+const resetPasswrord = async (req,res)=>{
+  // const user = await users.find({email:req.body.email})
+  const {password,email} = req.body;
+console.log(req.body);
+
+  const encPassword = await bcrypt.hash(password, 12);
+  const updatePassword = await users.updateOne({email:email},{$set:{password:encPassword}})
+  if(updatePassword.modifiedCount!==1){
+    res.status(400).json({message:"reset password was failed "})
+  }else{
+    res.status(200).json({message:"password changed successfully" ,data:updatePassword})
+  }
+
 }
 
 module.exports = {
@@ -418,5 +464,7 @@ module.exports = {
   bookedDates,
   stysCategory,
   searchResults,
-  forgotPassword
+  forgotPassword,
+  resetPasswrord,
+  verifyOtp
 };

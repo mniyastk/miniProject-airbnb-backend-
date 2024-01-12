@@ -48,7 +48,6 @@ const addListing = async (req, res) => {
     propertyType,
     stayType,
     title,
-    userType:"host"
   });
 
  
@@ -65,4 +64,51 @@ const listings = async (req, res) => {
   res.status(200).json({ message: "success", data: host.listings });
 };
 
-module.exports = { addListing, listings };
+/// Edit listings ///
+
+const editListing = async (req,res)=>{
+
+const files = req.files
+const uploads = files.map(async (item) => {
+  const result = await cloudinary.uploader.upload(item.path);
+  return { url: result.secure_url };
+});
+
+
+const imageData = await Promise.all(uploads);
+
+const data =await  JSON.parse(req.body.editDatas)
+const {maxGuests,beds,bathRooms,bedRooms,description,price,title,host_id,property_id}= data
+const accessData = {
+  $set:{
+    maxGuests:maxGuests,
+    beds:beds,
+    bathRooms:bathRooms,
+    bedRooms:bedRooms,
+    description:description,
+    price:price,
+    title:title,
+    images:imageData
+  }
+}
+const filterData  = Object.fromEntries(
+  Object.entries(accessData.$set).filter(([key, value]) =>{
+   if (Array.isArray(value)) {
+    return value.length > 0; 
+  } else {
+    return value !== ""; 
+  }
+})
+);
+console.log(filterData);
+console.log(accessData);
+if(imageData){
+  const stay = await property.updateOne({_id:data.property_id},filterData)
+  res.status(200).json({data:imageData ,stay})
+}
+
+
+
+}
+
+module.exports = { addListing, listings ,editListing};

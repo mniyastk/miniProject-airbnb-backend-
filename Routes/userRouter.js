@@ -18,6 +18,8 @@ const {
   stysCategory,
   searchResults,
   forgotPassword,
+  resetPasswrord,
+  verifyOtp,
  
 } = require("../controller/userController");
 const {
@@ -42,6 +44,8 @@ router.get("/api/users/bookings/booking/dates",bookedDates)
 router.get("/api/users/properties/category?",stysCategory)
 router.get("/api/users/properties/search?",searchResults)
 router.post("/user/forgotPassword",forgotPassword)
+router.post("/user/resetPassword",resetPasswrord)
+router.post("/user/verifyOtp",verifyOtp)
 
 
 
